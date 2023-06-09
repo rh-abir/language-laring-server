@@ -31,9 +31,32 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const studentsCollection = client.db("languageDB").collection("students");
+    const languageCollection = client.db("languageDB").collection("languages");
+    // const buysCollection = client.db('languageDB').collection('students')
+
+    // save user in DB
+    app.put("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      console.log(email, user);
+      const option = { upsert: true };
+      const query = { email: email };
+      const updateDoc = {
+        $set: user,
+      };
+
+      const result = await studentsCollection.updateOne(
+        query,
+        updateDoc,
+        option
+      );
+      console.log(result);
+      res.send(result);
+    });
+
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
