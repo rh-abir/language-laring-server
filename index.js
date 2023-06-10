@@ -32,7 +32,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const studentsCollection = client.db("languageDB").collection("students");
-    const languageCollection = client.db("languageDB").collection("languages");
+    const classCollection = client.db("languageDB").collection("class");
     // const buysCollection = client.db('languageDB').collection('students')
 
     // save user in DB
@@ -54,6 +54,14 @@ async function run() {
       console.log(result);
       res.send(result);
     });
+
+
+    app.post('/class', async(req, res) => {
+      const body = req.body;
+      console.log(body)
+      const result = await classCollection.insertOne(body)
+      res.send(result)
+    })
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
