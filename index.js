@@ -56,12 +56,22 @@ async function run() {
     });
 
 
+    // post class 
     app.post('/class', async(req, res) => {
       const body = req.body;
-      console.log(body)
+      // console.log(body)
       const result = await classCollection.insertOne(body)
       res.send(result)
     })
+
+    // get all class 
+    app.get('/class', async (req, res) => {
+      const result = await classCollection.find().toArray()
+      res.send(result)
+    })
+
+
+
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
