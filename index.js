@@ -31,14 +31,14 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    const studentsCollection = client.db("languageDB").collection("students");
+    const usersCollection = client.db("languageDB").collection("users");
     const classCollection = client.db("languageDB").collection("class");
     // const buysCollection = client.db('languageDB').collection('students')
 
     // get all user
     app.get("/users", async (req, res) => {
-      const result = await studentsCollection.find().toArray();
-      console.log(result)
+      const result = await usersCollection.find().toArray();
+      // console.log(result)
       res.send(result);
     });
 
@@ -53,13 +53,19 @@ async function run() {
         $set: user,
       };
 
-      const result = await studentsCollection.updateOne(
-        query,
-        updateDoc,
-        option
-      );
-      console.log(result);
+      const result = await usersCollection.updateOne(query, updateDoc, option);
+      // console.log(result);
       res.send(result);
+    });
+
+
+    // get a users 
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      console.log(result);
+      res.send(result)
     });
 
     // post class
@@ -81,7 +87,7 @@ async function run() {
       const email = req.params.email;
       const query = { email: email };
       const result = await classCollection.find(query).toArray();
-      console.log(result);
+      // console.log(result);
       res.send(result);
     });
 
