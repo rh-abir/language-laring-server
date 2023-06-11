@@ -33,7 +33,7 @@ async function run() {
   try {
     const usersCollection = client.db("languageDB").collection("users");
     const classCollection = client.db("languageDB").collection("class");
-    // const buysCollection = client.db('languageDB').collection('students')
+    const selectedCollection = client.db('languageDB').collection('selecteds')
 
     // get all user
     app.get("/users", async (req, res) => {
@@ -42,7 +42,7 @@ async function run() {
       res.send(result);
     });
 
-    // save user in DB
+    // save a user in DB
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
@@ -60,11 +60,11 @@ async function run() {
 
 
     // get a users 
-    app.get("/user/:email", async (req, res) => {
+    app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await usersCollection.findOne(query);
-      console.log(result);
+      // console.log(result);
       res.send(result)
     });
 
@@ -90,6 +90,22 @@ async function run() {
       // console.log(result);
       res.send(result);
     });
+
+
+
+    // upload a selected class in db
+    app.post('/select', async(req, res) => {
+      const body = req.body;
+      console.log(body)
+      const result = await selectedCollection.insertOne(body)
+      res.send(result)
+
+    })
+
+
+
+
+
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
