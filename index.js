@@ -35,6 +35,13 @@ async function run() {
     const classCollection = client.db("languageDB").collection("class");
     // const buysCollection = client.db('languageDB').collection('students')
 
+    // get all user
+    app.get("/users", async (req, res) => {
+      const result = await studentsCollection.find().toArray();
+      console.log(result)
+      res.send(result);
+    });
+
     // save user in DB
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -63,29 +70,21 @@ async function run() {
       res.send(result);
     });
 
-
-
     // get all class
     app.get("/class", async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
 
-
-
     // get all class by user email
     app.get("/class/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await classCollection.find(query).toArray();
-      console.log(result)
+      console.log(result);
       res.send(result);
     });
 
-
-
-
-    
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
     // Send a ping to confirm a successful connection
