@@ -103,6 +103,21 @@ async function run() {
     })
 
 
+    // get selet class by user email 
+    app.get('/select/:email', async(req, res) => {
+      const email = req.params.email;
+      const query = {"student.email": email}
+      const result = await selectedCollection.find(query).toArray();
+      console.log(result)
+      res.send(result)
+      
+
+
+    })
+
+
+
+
 
 
 
