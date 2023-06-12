@@ -4,7 +4,7 @@ const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 
 const port = process.env.PORT || 5000;
 
@@ -33,7 +33,7 @@ async function run() {
   try {
     const usersCollection = client.db("languageDB").collection("users");
     const classCollection = client.db("languageDB").collection("class");
-    const selectedCollection = client.db('languageDB').collection('selecteds')
+    const selectedCollection = client.db("languageDB").collection("selecteds");
 
     // get all user
     app.get("/users", async (req, res) => {
@@ -58,14 +58,13 @@ async function run() {
       res.send(result);
     });
 
-
-    // get a users 
+    // get a users role
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await usersCollection.findOne(query);
       // console.log(result);
-      res.send(result)
+      res.send(result);
     });
 
     // post class
@@ -91,36 +90,47 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/class/status/:id", async (req, res) => {
+      const id = req.params.id;
+      const body = req.body.status;
 
+      console.log("from backed", id, body)
+
+      const query = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: body,
+        },
+      };
+
+      const result = await classCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
 
     // upload a selected class in db
-    app.post('/select', async(req, res) => {
+    app.post("/select", async (req, res) => {
       const body = req.body;
-      console.log(body)
-      const result = await selectedCollection.insertOne(body)
-      res.send(result)
+      // console.log(body);
+      const result = await selectedCollection.insertOne(body);
+      res.send(result);
+    });
 
-    })
-
-
-    // get selet class by user email 
-    app.get('/select/:email', async(req, res) => {
+    // get selet class by user email
+    app.get("/select/:email", async (req, res) => {
       const email = req.params.email;
-      const query = {"student.email": email}
+      const query = { "student.email": email };
       const result = await selectedCollection.find(query).toArray();
-      console.log(result)
-      res.send(result)
-      
+      // console.log(result)
+      res.send(result);
+    });
 
-
-    })
-
-
-
-
-
-
-
+    app.delete("/selects/:id", async (req, res) => {
+      const id = req.params.id;
+      console.log("please delete form database", id);
+      const query = { _id: new ObjectId(id) };
+      const result = await selectedCollection.deleteOne(query);
+      res.send(result);
+    });
 
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
