@@ -49,6 +49,18 @@ async function run() {
       res.send(result);
     });
 
+
+    // get all instructos 
+    app.get('/instructos', async(req, res) => {
+
+      const query = {role: 'instructor'}
+      const result = await usersCollection.find(query).toArray()
+      // console.log(result)
+      res.send(result)
+
+    })
+
+
     // save a user in DB
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -65,11 +77,13 @@ async function run() {
       res.send(result);
     });
 
-    // payments
 
+
+    // payments
     app.post("/order", async (req, res) => {
       const order = req.body;
       const tran_id = new ObjectId().toString();
+      const productId = order.product._id
 
       const data = {
         total_amount: order.mony,
@@ -123,13 +137,16 @@ async function run() {
 
       app.post("/payment/suceess/:tranId", async (req, res) => {
         console.log(req.params.tranId);
-
         const result = await orderCollection.updateOne(
           { tranjectionId: req.params.tranId },
           { $set: { paidStatus: true } }
         );
-
+        
         if (result.modifiedCount > 0) {
+         
+          // TODO Update Enroll Number
+          // const updateEnroll =  await classCollection.updateOne({ _id : productId }, {$inc: {enroll: 1 }})
+
           res.redirect(
             `http://localhost:5173/payment/success/${req.params.tranId}`
           );
@@ -148,6 +165,18 @@ async function run() {
       });
     });
 
+
+    // get paymet successfull card 
+    app.get('/payment/:email', async(req, res) => {
+      const email = req.params.email;
+      const query =  {"product.student.email" : email}
+      const result = await orderCollection.find(query).toArray()
+      // console.log(result)
+      res.send(result);
+    })
+
+
+
     // get a users role
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -161,6 +190,7 @@ async function run() {
     app.post("/class", async (req, res) => {
       const body = req.body;
       // console.log(body)
+      
       const result = await classCollection.insertOne(body);
       res.send(result);
     });
@@ -168,6 +198,12 @@ async function run() {
     // get all class
     app.get("/class", async (req, res) => {
       const result = await classCollection.find().toArray();
+      res.send(result);
+    });
+
+    // get appruve Class 
+    app.get("/approveclass", async (req, res) => {
+      const result = await classCollection.find({status: "approve"}).toArray();
       res.send(result);
     });
 
@@ -184,7 +220,7 @@ async function run() {
       const id = req.params.id;
       const body = req.body.status;
 
-      console.log("from backed", id, body);
+      // console.log("from backed", id, body);
 
       const query = { _id: new ObjectId(id) };
       const updateDoc = {
@@ -200,7 +236,7 @@ async function run() {
     // upload a selected class in db
     app.post("/select", async (req, res) => {
       const body = req.body;
-      // console.log(body);
+      // return console.log(body);
       const result = await selectedCollection.insertOne(body);
       res.send(result);
     });
