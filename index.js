@@ -2,6 +2,7 @@ const express = require("express");
 const app = express();
 
 const morgan = require("morgan");
+const jwt = require("jsonwebtoken");
 const cors = require("cors");
 
 const SSLCommerzPayment = require("sslcommerz-lts");
@@ -35,12 +36,44 @@ const store_id = process.env.STORE_ID;
 const store_passwd = process.env.STORE_PASS;
 const is_live = false; //true for live, false for sandbox
 
+const verifyJWT = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, message: "Unauthorized Access" });
+  }
+
+  const token = authorization.split(" ")[1];
+
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .send({ error: true, message: "Unauthorized Access" });
+    }
+
+    req.decoded = decoded;
+    next();
+
+  });
+};
+
 async function run() {
   try {
     const usersCollection = client.db("languageDB").collection("users");
     const classCollection = client.db("languageDB").collection("class");
     const selectedCollection = client.db("languageDB").collection("selecteds");
     const orderCollection = client.db("languageDB").collection("order");
+
+    app.post("/jwt", async (req, res) => {
+      const email = req.body;
+      const token = jwt.sign(email, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "7d",
+      });
+
+      res.send({ token });
+    });
 
     // get all user
     app.get("/users", async (req, res) => {
@@ -49,17 +82,13 @@ async function run() {
       res.send(result);
     });
 
-
-    // get all instructos 
-    app.get('/instructos', async(req, res) => {
-
-      const query = {role: 'instructor'}
-      const result = await usersCollection.find(query).toArray()
+    // get all instructos
+    app.get("/instructos", async (req, res) => {
+      const query = { role: "instructor" };
+      const result = await usersCollection.find(query).toArray();
       // console.log(result)
-      res.send(result)
-
-    })
-
+      res.send(result);
+    });
 
     // save a user in DB
     app.put("/users/:email", async (req, res) => {
@@ -77,13 +106,13 @@ async function run() {
       res.send(result);
     });
 
-
-
     // payments
     app.post("/order", async (req, res) => {
       const order = req.body;
       const tran_id = new ObjectId().toString();
-      const productId = order.product._id
+
+      const productId = order.product._id;
+      const enrollSets = order.product.enroll + 1;
 
       const data = {
         total_amount: order.mony,
@@ -137,16 +166,19 @@ async function run() {
 
       app.post("/payment/suceess/:tranId", async (req, res) => {
         console.log(req.params.tranId);
+        console.log("this is product id", productId, enrollSets);
+
+        const updetaEnroll = await classCollection.updateOne(
+          { _id: productId },
+          { $inc: { enroll: enrollSets } }
+        );
+
         const result = await orderCollection.updateOne(
           { tranjectionId: req.params.tranId },
           { $set: { paidStatus: true } }
         );
-        
-        if (result.modifiedCount > 0) {
-         
-          // TODO Update Enroll Number
-          // const updateEnroll =  await classCollection.updateOne({ _id : productId }, {$inc: {enroll: 1 }})
 
+        if (result.modifiedCount > 0) {
           res.redirect(
             `http://localhost:5173/payment/success/${req.params.tranId}`
           );
@@ -165,17 +197,14 @@ async function run() {
       });
     });
 
-
-    // get paymet successfull card 
-    app.get('/payment/:email', async(req, res) => {
+    // get paymet successfull card
+    app.get("/payment/:email", async (req, res) => {
       const email = req.params.email;
-      const query =  {"product.student.email" : email}
-      const result = await orderCollection.find(query).toArray()
+      const query = { "product.student.email": email };
+      const result = await orderCollection.find(query).toArray();
       // console.log(result)
       res.send(result);
-    })
-
-
+    });
 
     // get a users role
     app.get("/users/:email", async (req, res) => {
@@ -187,28 +216,30 @@ async function run() {
     });
 
     // post class
-    app.post("/class", async (req, res) => {
+    app.post("/class",  async (req, res) => {
       const body = req.body;
       // console.log(body)
-      
+
       const result = await classCollection.insertOne(body);
       res.send(result);
     });
 
     // get all class
-    app.get("/class", async (req, res) => {
+    app.get("/class", verifyJWT,  async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
 
-    // get appruve Class 
-    app.get("/approveclass", async (req, res) => {
-      const result = await classCollection.find({status: "approve"}).toArray();
+    // get appruve Class
+    app.get("/approveclass", verifyJWT, async (req, res) => {
+      const result = await classCollection
+        .find({ status: "approve" })
+        .toArray();
       res.send(result);
     });
 
     // get all class by user email
-    app.get("/class/:email", async (req, res) => {
+    app.get("/class/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
       const result = await classCollection.find(query).toArray();
@@ -252,8 +283,8 @@ async function run() {
 
     app.delete("/select/:id", async (req, res) => {
       const id = req.params.id;
-      console.log("please delete form database", id);
-      const query = { _id: new ObjectId(id) };
+      //  return console.log("please delete form database", id);
+      const query = { _id: id };
       const result = await selectedCollection.deleteOne(query);
       res.send(result);
     });
