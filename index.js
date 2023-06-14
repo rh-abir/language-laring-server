@@ -249,6 +249,19 @@ async function run() {
       res.send(result);
     });
 
+
+    // get Popular class 
+    app.get('/calss/popular', async(req, res) => {
+
+      const query = { enroll: {$gt: 0} }
+      const result = await classCollection.find(query).toArray();
+      console.log(result)
+      res.send(result)
+
+    })
+
+
+
     // get all class by user email
     app.get("/class/:email", verifyJWT, async (req, res) => {
       const email = req.params.email;
