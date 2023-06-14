@@ -55,7 +55,6 @@ const verifyJWT = (req, res, next) => {
 
     req.decoded = decoded;
     next();
-
   });
 };
 
@@ -94,7 +93,7 @@ async function run() {
     app.put("/users/:email", async (req, res) => {
       const email = req.params.email;
       const user = req.body;
-      console.log(email, user);
+      // console.log(email, user);
       const option = { upsert: true };
       const query = { email: email };
       const updateDoc = {
@@ -145,7 +144,7 @@ async function run() {
         ship_country: "Bangladesh",
       };
 
-      console.log(data);
+      // console.log(data);
 
       const sslcz = new SSLCommerzPayment(store_id, store_passwd, is_live);
       sslcz.init(data).then((apiResponse) => {
@@ -166,12 +165,7 @@ async function run() {
 
       app.post("/payment/suceess/:tranId", async (req, res) => {
         console.log(req.params.tranId);
-        console.log("this is product id", productId, enrollSets);
-
-        const updetaEnroll = await classCollection.updateOne(
-          { _id: productId },
-          { $inc: { enroll: enrollSets } }
-        );
+        // console.log("this is product id", productId, enrollSets);
 
         const result = await orderCollection.updateOne(
           { tranjectionId: req.params.tranId },
@@ -206,6 +200,23 @@ async function run() {
       res.send(result);
     });
 
+    // update enroll sites
+    app.put("/class/enroll/:id", async (req, res) => {
+      const id = req.params.id;
+      const body = req.body;
+
+      const newEnroll = body.cardData.enroll + 1;
+      console.log(id, newEnroll);
+
+      const query = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: { enroll: newEnroll },
+      };
+      const result = await classCollection.updateOne(query, updateDoc, options);
+      res.send(result);
+    });
+
     // get a users role
     app.get("/users/:email", async (req, res) => {
       const email = req.params.email;
@@ -216,7 +227,7 @@ async function run() {
     });
 
     // post class
-    app.post("/class",  async (req, res) => {
+    app.post("/class", async (req, res) => {
       const body = req.body;
       // console.log(body)
 
@@ -225,13 +236,13 @@ async function run() {
     });
 
     // get all class
-    app.get("/class", verifyJWT,  async (req, res) => {
+    app.get("/class", async (req, res) => {
       const result = await classCollection.find().toArray();
       res.send(result);
     });
 
     // get appruve Class
-    app.get("/approveclass", verifyJWT, async (req, res) => {
+    app.get("/approveclass", async (req, res) => {
       const result = await classCollection
         .find({ status: "approve" })
         .toArray();
@@ -267,7 +278,6 @@ async function run() {
     // upload a selected class in db
     app.post("/select", async (req, res) => {
       const body = req.body;
-      // return console.log(body);
       const result = await selectedCollection.insertOne(body);
       res.send(result);
     });
