@@ -160,11 +160,11 @@ async function run() {
 
         const result = orderCollection.insertOne(finalOrder);
 
-        console.log("Redirecting to: ", GatewayPageURL);
+        // console.log("Redirecting to: ", GatewayPageURL);
       });
 
       app.post("/payment/suceess/:tranId", async (req, res) => {
-        console.log(req.params.tranId);
+        // console.log(req.params.tranId);
         // console.log("this is product id", productId, enrollSets);
 
         const result = await orderCollection.updateOne(
@@ -206,7 +206,7 @@ async function run() {
       const body = req.body;
 
       const newEnroll = body.cardData.enroll + 1;
-      console.log(id, newEnroll);
+      // console.log(id, newEnroll);
 
       const query = { _id: new ObjectId(id) };
       const options = { upsert: true };
@@ -255,7 +255,7 @@ async function run() {
 
       const query = { enroll: {$gt: 0} }
       const result = await classCollection.find(query).toArray();
-      console.log(result)
+      // console.log(result)
       res.send(result)
 
     })
